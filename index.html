@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Add border to canvas -->
+    <div style="margin-left:auto;margin-right:auto;width:800px;height:400px;">
+        <canvas id="myCanvas" width="700" height="400" style="border: 1px solid black;">Your browser does not support canvas</canvas>
+        <textarea id="functionInput" rows="1" cols="50"></textarea>
+    </div>
+
+    <!-- Can scale the canvas using the browser with CSS. Or can use javascript to scale the objects. There is a difference between logical canvas size 
+    and canvas display size with CSS -->
+
+    <!-- <div style="margin-left:auto;margin-right:auto;width:1300px;height:800px;">
+        <canvas id="myCanvas" width="1300" height="800" style="border: 1px solid black;width: 1300px;height: 800px">Your browser does not support canvas</canvas>
+        <textarea id="textArea" rows="1" cols="50"></textarea>
+    </div> -->
+
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+    
+    <script type="text/javascript" src="dist/bundle.js"></script>
+    <script type="text/javascript">
+        const canvas = document.getElementById("myCanvas");
+        game = new Game(canvas);
+        document.getElementById("functionInput").focus();
+    </script>
+
+
+</body>
+
+</html>
