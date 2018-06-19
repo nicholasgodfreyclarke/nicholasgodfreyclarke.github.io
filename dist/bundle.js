@@ -80,11 +80,13 @@ class Obstacle extends GameObject {
         let xMax;
         let yMin;
         let yMax;
-        xMin = this.radius;
-        ;
+        // Offset so gameObjects do not overlap the axis marks
+        let yAxisOffset = this.context.measureText('-10').width + 6;
+        let xAxisOffset = 6 + this.context.measureText('M').width;
+        xMin = this.radius + yAxisOffset;
         xMax = canvas.width - this.radius;
         yMin = this.radius;
-        yMax = canvas.height - this.radius;
+        yMax = canvas.height - this.radius - xAxisOffset;
         return {
             xMin: xMin,
             xMax: xMax,
@@ -188,17 +190,19 @@ class Soldier extends GameObject {
         let xMax;
         let yMin;
         let yMax;
+        // Offset so gameObjects do not overlap the axis marks
+        let yAxisOffset = this.context.measureText('-10').width + 6;
+        let xAxisOffset = 6 + this.context.measureText('M').width;
         if (this.facingDirection === "r") {
-            xMin = this.radius;
-            ;
+            xMin = this.radius + yAxisOffset;
             xMax = canvas.width / 2 - this.radius;
         }
         else {
-            xMin = canvas.width / 2 + this.radius;
+            xMin = canvas.width / 2 + this.radius + yAxisOffset;
             xMax = canvas.width / 2 + canvas.width / 2 - this.radius;
         }
         yMin = this.radius + this.nameTextOffset + 10; // Additional 10 for the height of the text
-        yMax = canvas.height - this.radius;
+        yMax = canvas.height - this.radius - xAxisOffset;
         return {
             xMin: xMin,
             xMax: xMax,
@@ -221,14 +225,15 @@ class Soldier extends GameObject {
         const theta = Math.PI / 4;
         const xHead = this.x;
         const yHead = this.y;
-        this.context.strokeStyle = "black";
         // Head
-        this.context.fillStyle = "yellow";
+        this.context.strokeStyle = "black";
+        // this.context.fillStyle = "yellow";
+        this.context.fillStyle = this.team === 1 ? "lightskyblue" : "lightgreen";
         this.context.beginPath();
         this.context.arc(xHead, yHead, rHead, 0, 2 * Math.PI);
         this.context.closePath();
-        this.context.stroke();
         this.context.fill();
+        this.context.stroke();
         // Eye
         let xEye;
         if (this.facingDirection === "r") {
@@ -296,12 +301,12 @@ class Soldier extends GameObject {
         this.context.fillStyle = "red";
         // Name
         this.context.fillText(this.name, this.x - this.context.measureText(this.name).width / 2, this.y - this.radius - this.nameTextOffset);
-        this.context.strokeStyle = "red";
-        // Head
-        this.context.beginPath();
-        this.context.arc(this.x, this.y, this.radius + 1, 0, 2 * Math.PI);
-        this.context.closePath();
-        this.context.stroke();
+        // this.context.strokeStyle = "red";
+        // // Head
+        // this.context.beginPath();
+        // this.context.arc(this.x, this.y, this.radius + 1, 0, 2 * Math.PI);
+        // this.context.closePath();
+        // this.context.stroke();
     }
     addToFuncHistory(funcString) {
         if (this.funcHistory[this.funcHistory.length - 1] !== funcString) {
@@ -668,7 +673,7 @@ class Game {
         this.drawGameObjects();
         this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
         this.turnReady = true;
-        this.statusElement.innerText = "Ready";
+        this.statusElement.innerText = "Ready (" + this.teams[this.teamTurn].selectedSoldier().name + "'s turn). Enter your function.";
     }
     getRandomInt(min, max) {
         // Utility function
@@ -757,8 +762,70 @@ class Game {
     }
     drawGameObjects() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawAxes();
         for (let key in this.gameObjects) {
             this.gameObjects[key].draw();
+        }
+    }
+    drawAxes() {
+        let selectedSoldier = this.teams[this.teamTurn].selectedSoldier();
+        let originX = selectedSoldier.x + selectedSoldier.radius;
+        let originY = selectedSoldier.y;
+        this.context.fillStyle = "black";
+        this.context.strokeStyle = "black";
+        // Positive X axis tick marks
+        let xScale = d3.scaleLinear().domain([0, 15]).range([0, this.canvas.width]);
+        let xTick = originX;
+        let num = 0;
+        while (xTick < this.canvas.width - 10) {
+            this.context.beginPath();
+            this.context.lineTo(xTick, this.canvas.height);
+            this.context.lineTo(xTick, this.canvas.height - 3);
+            this.context.closePath();
+            this.context.stroke();
+            this.context.fillText(String(num), xTick - this.context.measureText(String(num)).width / 2, this.canvas.height - 6);
+            num++;
+            xTick = xScale(xScale.invert(xTick) + 1);
+        }
+        // Negative X axis tick marks
+        xTick = originX;
+        num = 0;
+        while (xTick > 10) {
+            this.context.beginPath();
+            this.context.lineTo(xTick, this.canvas.height);
+            this.context.lineTo(xTick, this.canvas.height - 3);
+            this.context.closePath();
+            this.context.stroke();
+            this.context.fillText(String(num), xTick - this.context.measureText(String(num)).width / 2, this.canvas.height - 6);
+            num--;
+            xTick = xScale(xScale.invert(xTick) - 1);
+        }
+        // Positive Y axis tick marks
+        let yScale = d3.scaleLinear().domain([0, 10]).range([0, this.canvas.height]);
+        let yTick = originY;
+        num = 0;
+        while (yTick < this.canvas.height - 10) {
+            this.context.beginPath();
+            this.context.lineTo(0, yTick);
+            this.context.lineTo(3, yTick);
+            this.context.closePath();
+            this.context.stroke();
+            this.context.fillText(String(num), 6, yTick + this.context.measureText('M').width / 2);
+            num++;
+            yTick = yScale(yScale.invert(yTick) + 1);
+        }
+        // Negative Y Axis tick marks
+        yTick = originY;
+        num = 0;
+        while (yTick > 10) {
+            this.context.beginPath();
+            this.context.lineTo(0, yTick);
+            this.context.lineTo(3, yTick);
+            this.context.closePath();
+            this.context.stroke();
+            this.context.fillText(String(num), 6, yTick + this.context.measureText('M').width / 2);
+            num--;
+            yTick = yScale(yScale.invert(yTick) - 1);
         }
     }
     endTurn() {
@@ -774,7 +841,7 @@ class Game {
             this.drawGameObjects();
             this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
             this.turnReady = true;
-            this.statusElement.innerText = "Ready";
+            this.statusElement.innerText = "Ready (" + this.teams[this.teamTurn].selectedSoldier().name + "'s turn). Enter your function.";
         }
         else {
             this.statusElement.innerText = "Game over!";

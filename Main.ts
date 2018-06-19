@@ -33,7 +33,7 @@ class Game {
         this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
 
         this.turnReady = true;
-        this.statusElement.innerText = "Ready"
+        this.statusElement.innerText = "Ready (" + this.teams[this.teamTurn].selectedSoldier().name + "'s turn). Enter your function.";
 
     }
 
@@ -150,10 +150,90 @@ class Game {
     }
 
     private drawGameObjects() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawAxes();
+
         for (let key in this.gameObjects) {
             this.gameObjects[key].draw();
         }
+    }
+
+    private drawAxes() {
+        let selectedSoldier = this.teams[this.teamTurn].selectedSoldier();
+
+        let originX = selectedSoldier.x + selectedSoldier.radius;
+        let originY = selectedSoldier.y;
+
+        this.context.fillStyle = "black";
+        this.context.strokeStyle = "black";
+
+        // Positive X axis tick marks
+        let xScale = d3.scaleLinear().domain([0, 15]).range([0, this.canvas.width]);
+        let xTick = originX;
+        let num = 0;
+        while (xTick < this.canvas.width-10) {
+            this.context.beginPath();
+            this.context.lineTo(xTick, this.canvas.height);
+            this.context.lineTo(xTick, this.canvas.height - 3);
+            this.context.closePath();
+            this.context.stroke();
+
+            this.context.fillText(String(num), xTick - this.context.measureText(String(num)).width / 2, this.canvas.height - 6);
+            num++;
+
+            xTick = xScale(xScale.invert(xTick) + 1);
+        }
+
+        // Negative X axis tick marks
+        xTick = originX;
+        num = 0;
+        while (xTick > 10) {
+            this.context.beginPath();
+            this.context.lineTo(xTick, this.canvas.height);
+            this.context.lineTo(xTick, this.canvas.height - 3);
+            this.context.closePath();
+            this.context.stroke();
+
+            this.context.fillText(String(num), xTick - this.context.measureText(String(num)).width / 2, this.canvas.height - 6);
+            num--;
+
+            xTick = xScale(xScale.invert(xTick) - 1);
+        }
+
+
+        // Positive Y axis tick marks
+        let yScale = d3.scaleLinear().domain([0, 10]).range([0, this.canvas.height]);
+        let yTick = originY;
+        num = 0;
+        while (yTick < this.canvas.height-10) {
+            this.context.beginPath();
+            this.context.lineTo(0, yTick);
+            this.context.lineTo(3, yTick);
+            this.context.closePath();
+            this.context.stroke();
+
+            this.context.fillText(String(num), 6, yTick + this.context.measureText('M').width / 2);
+            num++;
+
+            yTick = yScale(yScale.invert(yTick) + 1);
+        }
+
+        // Negative Y Axis tick marks
+        yTick = originY;
+        num = 0;
+        while (yTick > 10) {
+            this.context.beginPath();
+            this.context.lineTo(0, yTick);
+            this.context.lineTo(3, yTick);
+            this.context.closePath();
+            this.context.stroke();
+
+            this.context.fillText(String(num), 6, yTick + this.context.measureText('M').width / 2);
+            num--;
+
+            yTick = yScale(yScale.invert(yTick) - 1);
+        }
+
     }
 
     private endTurn() {
@@ -173,7 +253,7 @@ class Game {
             this.drawGameObjects();
             this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
             this.turnReady = true;
-            this.statusElement.innerText = "Ready"
+            this.statusElement.innerText = "Ready (" + this.teams[this.teamTurn].selectedSoldier().name + "'s turn). Enter your function.";
         } else {
             this.statusElement.innerText = "Game over!"
         }

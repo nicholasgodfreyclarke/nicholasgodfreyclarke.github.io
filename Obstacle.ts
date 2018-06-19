@@ -65,10 +65,14 @@ class Obstacle extends GameObject {
         let yMin: number;
         let yMax: number;
 
-        xMin = this.radius;;
+        // Offset so gameObjects do not overlap the axis marks
+        let yAxisOffset = this.context.measureText('-10').width + 6;
+        let xAxisOffset = 6 + this.context.measureText('M').width;
+
+        xMin = this.radius + yAxisOffset;
         xMax = canvas.width - this.radius;
         yMin = this.radius;
-        yMax = canvas.height - this.radius
+        yMax = canvas.height - this.radius - xAxisOffset;
 
         return {
             xMin: xMin,
