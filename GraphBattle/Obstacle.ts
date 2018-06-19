@@ -70,7 +70,7 @@ class Obstacle extends GameObject {
         let xAxisOffset = 6 + this.context.measureText('M').width;
 
         xMin = this.radius + yAxisOffset;
-        xMax = canvas.width - this.radius;
+        xMax = canvas.width - this.radius - yAxisOffset;
         yMin = this.radius;
         yMax = canvas.height - this.radius - xAxisOffset;
 
@@ -106,7 +106,7 @@ class ObstacleDamage {
         this.obstacleY = obstacle.y;
         this.obstacleRadius = obstacle.radius;
         this.canvasWidth = canvasWidth;
-        
+
         // Want to contain the drawing of damage to within the obstacle.
         // If the damage circle is entirely within the obstacle then just draw a circle -> simple.
         // However if the damage only partly overlaps with the obstacle then we want to just fill in the intersection of the damage circle and the

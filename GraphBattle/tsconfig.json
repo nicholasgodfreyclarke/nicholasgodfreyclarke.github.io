@@ -1,0 +1,20 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "es6",
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "outFile": "dist/bundle.js"
+    },
+    "files": [
+        "GameObject.ts",
+        "Obstacle.ts",
+        "Soldier.ts",
+        "FuncParser.ts",
+        "PlayerFunc.ts",
+        "Team.ts",
+        "Main.ts",
+    ]
+
+}

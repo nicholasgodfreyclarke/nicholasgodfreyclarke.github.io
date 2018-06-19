@@ -171,7 +171,7 @@ class Game {
         let xScale = d3.scaleLinear().domain([0, 15]).range([0, this.canvas.width]);
         let xTick = originX;
         let num = 0;
-        while (xTick < this.canvas.width-10) {
+        while (xTick < this.canvas.width - 10) {
             this.context.beginPath();
             this.context.lineTo(xTick, this.canvas.height);
             this.context.lineTo(xTick, this.canvas.height - 3);
@@ -205,7 +205,7 @@ class Game {
         let yScale = d3.scaleLinear().domain([0, 10]).range([0, this.canvas.height]);
         let yTick = originY;
         num = 0;
-        while (yTick < this.canvas.height-10) {
+        while (yTick < this.canvas.height - 10) {
             this.context.beginPath();
             this.context.lineTo(0, yTick);
             this.context.lineTo(3, yTick);

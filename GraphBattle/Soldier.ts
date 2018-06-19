@@ -40,8 +40,8 @@ class Soldier extends GameObject {
             xMax = canvas.width / 2 - this.radius;
 
         } else {
-            xMin = canvas.width / 2 + this.radius + yAxisOffset;
-            xMax = canvas.width / 2 + canvas.width / 2 - this.radius;
+            xMin = canvas.width / 2 + this.radius;
+            xMax = canvas.width - this.radius - yAxisOffset;
         }
 
         yMin = this.radius + this.nameTextOffset + 10; // Additional 10 for the height of the text
@@ -72,26 +72,19 @@ class Soldier extends GameObject {
 
         // Angle of eye to head
         const theta = Math.PI / 4;
-
         const xHead = this.x;
         const yHead = this.y;
 
-        
-
         // Head
-
         this.context.strokeStyle = "black"
-        // this.context.fillStyle = "yellow";
-        this.context.fillStyle = this.team === 1? "lightskyblue": "lightgreen";
-        
+        this.context.fillStyle = this.team === 1 ? "lightskyblue" : "lightgreen";
+
         this.context.beginPath();
         this.context.arc(xHead, yHead, rHead, 0, 2 * Math.PI);
         this.context.closePath();
         this.context.fill();
         this.context.stroke();
-        
 
-        
         // Eye
         let xEye: number;
         if (this.facingDirection === "r") {
@@ -169,17 +162,9 @@ class Soldier extends GameObject {
     }
 
     public drawSelectionIndicator() {
-
-        this.context.fillStyle = "red";
         // Name
+        this.context.fillStyle = "red";
         this.context.fillText(this.name, this.x - this.context.measureText(this.name).width / 2, this.y - this.radius - this.nameTextOffset);
-
-        // this.context.strokeStyle = "red";
-        // // Head
-        // this.context.beginPath();
-        // this.context.arc(this.x, this.y, this.radius + 1, 0, 2 * Math.PI);
-        // this.context.closePath();
-        // this.context.stroke();
     }
 
 
