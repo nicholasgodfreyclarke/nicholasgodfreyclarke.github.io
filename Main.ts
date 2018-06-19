@@ -8,12 +8,16 @@ class Game {
     public gameOver: boolean = false;
 
     private canvas: HTMLCanvasElement;
+    private statusElement: HTMLParagraphElement;
     private context: CanvasRenderingContext2D;
     private turnReady: boolean = false;
 
-    constructor(canvas: HTMLCanvasElement) {
+
+    constructor(canvas: HTMLCanvasElement, statusElement: HTMLParagraphElement) {
 
         this.canvas = canvas;
+        this.statusElement = statusElement;
+
         this.context = canvas.getContext("2d");
 
         this.teams[1] = new Team();
@@ -29,6 +33,7 @@ class Game {
         this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
 
         this.turnReady = true;
+        this.statusElement.innerText = "Ready"
 
     }
 
@@ -118,61 +123,29 @@ class Game {
     public playTurn(funcString: string) {
 
         if (this.turnReady) {
-
-            this.turnReady =  false;
-
+            this.turnReady = false;
             let selectedSoldier = this.teams[this.teamTurn].selectedSoldier();
 
             let func = new PlayerFunc(this.canvas, funcString, selectedSoldier);
 
-            selectedSoldier.addToFuncHistory(funcString);
+            if (func.parseError === null) {
 
-            func.calculatePath(this.gameObjects);
-            let points: number[][];
-            points = func.points;
+                selectedSoldier.addToFuncHistory(funcString);
 
-            // let ease = d3.easeCubicInOut;
-            let ease = d3.easeLinear;
-            const MAX_DURATION = 3000;
-            // Max duration across whole screen of 3 seconds, actual duration of 3 secs * ratio of width travelled to total width
-            let duration = MAX_DURATION * (points[points.length - 1][0] - points[0][0]) / this.canvas.width;
-            let proportion: number;
-            let numPoints: number;
-
-            let numPointsChecked: number = 0;
-            let timer = d3.timer((elapsed) => {
-                // compute how far through the animation we are (0 to 1)
-                proportion = Math.min(1, ease(elapsed / duration));
-                // Calculate the number of points to plot
-                numPoints = Math.floor(points.length * proportion);
-
-                func.draw(numPoints);
-
-                // Check hits and draw if necessary
-                let xCoord: number;
-                for (let i: number = numPointsChecked; i < func.numPointsDrawn; i++) {
-                    xCoord = points[i][0];
-
-                    if (xCoord in func.hitEvents) {
-                        console.log('Killed');
-                        if (xCoord in func.hitEvents) {
-                            this.gameObjects[func.hitEvents[xCoord]].drawHit();
-                        }
-                    }
-                }
-                numPointsChecked = func.numPointsDrawn;
+                func.calculatePath(this.gameObjects);
+                let points: number[][];
+                points = func.points;
 
 
-                if (elapsed >= duration + 1000) {
-                    timer.stop();
-                    this.endTurn();
-                }
+                this.statusElement.innerText = "Plotting: " + funcString
 
-                // if (proportion === 1) {
-                //     timer.stop();
-                //     this.endTurn();
-                // }
-            });
+                // $.proxy binds the object context to the function in the callback (similar to bind)
+                func.plotFunc(points, func.hitEvents, this.gameObjects).done($.proxy(this.endTurn, this));
+
+            } else {
+                this.statusElement.innerText = func.parseError;
+                this.turnReady = true;
+            }
         }
     }
 
@@ -200,8 +173,9 @@ class Game {
             this.drawGameObjects();
             this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
             this.turnReady = true;
+            this.statusElement.innerText = "Ready"
         } else {
-            alert("Game Over!")
+            this.statusElement.innerText = "Game over!"
         }
     }
 }

@@ -186,7 +186,6 @@ class Soldier extends GameObject {
             this.funcHistoryIndex -= 1;
         }
         return this.funcHistory[this.funcHistoryIndex];
-
     }
 
     public nextFunc(): string {
@@ -199,8 +198,5 @@ class Soldier extends GameObject {
             // Clear form
             return ""
         }
-
     }
-
-
 }

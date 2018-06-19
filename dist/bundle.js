@@ -510,7 +510,7 @@ class PlayerFunc {
         let obj;
         let hitEvents = {};
         let y;
-        let x; // Typescript may complain that x is declared and not used -> but it is used in the eval of the funcString below
+        let x;
         let values = {
             e: Math.E,
             pi: Math.PI,
@@ -558,25 +558,6 @@ class PlayerFunc {
         this.hitEvents = hitEvents;
         this.points = points;
     }
-    // public calculateHits(objs: { [id: string]: GameObject }) {
-    //     let point: number[];
-    //     let xCoord: number;
-    //     let yCoord: number;
-    //     let hitEvents = {};
-    //     let obj: GameObject;
-    //     for (point of this.points) {
-    //         xCoord = point[0];
-    //         yCoord = point[1];
-    //         for (let key in objs) {
-    //             obj = objs[key];
-    //             if (obj.checkHit(xCoord, yCoord) && obj.id !== this.originSoldier.id) {
-    //                 obj.processHit()
-    //                 hitEvents[xCoord] = obj.id;
-    //             }
-    //         }
-    //     }
-    //     this.hitEvents = hitEvents;
-    // }
     draw(numPoints) {
         // The idea here is only drawn the additional line segements needed given the proportion of the 
         // way we are throught the function and the line segments we have already drawn
@@ -597,6 +578,43 @@ class PlayerFunc {
         this.context.stroke();
         // Store where we finished
         this.numPointsDrawn = numPoints;
+    }
+    plotFunc(points, hitEvents, gameObjects) {
+        // It seems counter intuitive to pass points and hitEvents back to this class - given that they are class variables.
+        // However in the future I would like it be able to handle external points and hitEvents for non local multiplayer
+        // let ease = d3.easeCubicInOut;
+        let ease = d3.easeLinear;
+        const MAX_DURATION = 3000;
+        // Max duration across whole screen of 3 seconds, actual duration of 3 secs * ratio of width travelled to total width
+        let duration = MAX_DURATION * (points[points.length - 1][0] - points[0][0]) / this.canvas.width;
+        let proportion;
+        let numPoints;
+        let r = $.Deferred();
+        let numPointsChecked = 0;
+        let timer = d3.timer((elapsed) => {
+            // compute how far through the animation we are (0 to 1)
+            proportion = Math.min(1, ease(elapsed / duration));
+            // Calculate the number of points to plot
+            numPoints = Math.floor(points.length * proportion);
+            this.draw(numPoints);
+            // Check hits and draw if necessary
+            let xCoord;
+            for (let i = numPointsChecked; i < this.numPointsDrawn; i++) {
+                xCoord = points[i][0];
+                if (xCoord in hitEvents) {
+                    if (xCoord in hitEvents) {
+                        gameObjects[hitEvents[xCoord]].drawHit();
+                    }
+                }
+            }
+            numPointsChecked = this.numPointsDrawn;
+            // Slight pause after graphing function to assess damage
+            if (elapsed >= duration + 1000) {
+                timer.stop();
+                r.resolve();
+            }
+        });
+        return r;
     }
 }
 class Team {
@@ -633,13 +651,14 @@ class Team {
     }
 }
 class Game {
-    constructor(canvas) {
+    constructor(canvas, statusElement) {
         // private soldiers: { [id: string]: Soldier; }
         this.gameObjects = {};
         this.teams = {};
         this.gameOver = false;
         this.turnReady = false;
         this.canvas = canvas;
+        this.statusElement = statusElement;
         this.context = canvas.getContext("2d");
         this.teams[1] = new Team();
         this.teams[2] = new Team();
@@ -649,6 +668,7 @@ class Game {
         this.drawGameObjects();
         this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
         this.turnReady = true;
+        this.statusElement.innerText = "Ready";
     }
     getRandomInt(min, max) {
         // Utility function
@@ -720,45 +740,19 @@ class Game {
             this.turnReady = false;
             let selectedSoldier = this.teams[this.teamTurn].selectedSoldier();
             let func = new PlayerFunc(this.canvas, funcString, selectedSoldier);
-            selectedSoldier.addToFuncHistory(funcString);
-            func.calculatePath(this.gameObjects);
-            let points;
-            points = func.points;
-            // let ease = d3.easeCubicInOut;
-            let ease = d3.easeLinear;
-            const MAX_DURATION = 3000;
-            // Max duration across whole screen of 3 seconds, actual duration of 3 secs * ratio of width travelled to total width
-            let duration = MAX_DURATION * (points[points.length - 1][0] - points[0][0]) / this.canvas.width;
-            let proportion;
-            let numPoints;
-            let numPointsChecked = 0;
-            let timer = d3.timer((elapsed) => {
-                // compute how far through the animation we are (0 to 1)
-                proportion = Math.min(1, ease(elapsed / duration));
-                // Calculate the number of points to plot
-                numPoints = Math.floor(points.length * proportion);
-                func.draw(numPoints);
-                // Check hits and draw if necessary
-                let xCoord;
-                for (let i = numPointsChecked; i < func.numPointsDrawn; i++) {
-                    xCoord = points[i][0];
-                    if (xCoord in func.hitEvents) {
-                        console.log('Killed');
-                        if (xCoord in func.hitEvents) {
-                            this.gameObjects[func.hitEvents[xCoord]].drawHit();
-                        }
-                    }
-                }
-                numPointsChecked = func.numPointsDrawn;
-                if (elapsed >= duration + 1000) {
-                    timer.stop();
-                    this.endTurn();
-                }
-                // if (proportion === 1) {
-                //     timer.stop();
-                //     this.endTurn();
-                // }
-            });
+            if (func.parseError === null) {
+                selectedSoldier.addToFuncHistory(funcString);
+                func.calculatePath(this.gameObjects);
+                let points;
+                points = func.points;
+                this.statusElement.innerText = "Plotting: " + funcString;
+                // $.proxy binds the object context to the function in the callback (similar to bind)
+                func.plotFunc(points, func.hitEvents, this.gameObjects).done($.proxy(this.endTurn, this));
+            }
+            else {
+                this.statusElement.innerText = func.parseError;
+                this.turnReady = true;
+            }
         }
     }
     drawGameObjects() {
@@ -780,9 +774,10 @@ class Game {
             this.drawGameObjects();
             this.teams[this.teamTurn].selectedSoldier().drawSelectionIndicator();
             this.turnReady = true;
+            this.statusElement.innerText = "Ready";
         }
         else {
-            alert("Game Over!");
+            this.statusElement.innerText = "Game over!";
         }
     }
 }
